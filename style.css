@@ -1,0 +1,9 @@
+body { font-family: Inter, sans-serif; background:#F7F7F3; color:#1F2937; margin:0; }
+.wrap { max-width:1200px; margin:20px auto; padding:20px; }
+h1 { color:#0B6E6A; font-size:1.8rem; }
+.panel { background:white; padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #E5E5E5; }
+input, button { padding:10px; margin-top:5px; border-radius:8px; border:1px solid #CCC; }
+.btn { background:#E8F4F2; cursor:pointer; }
+.btn.primary { background:#0BB4A6; color:white; border:none; }
+.btn:hover { opacity:0.9; }
+.footer-tip { margin-top:20px; font-size:0.9rem; color:#555; font-style:italic; }

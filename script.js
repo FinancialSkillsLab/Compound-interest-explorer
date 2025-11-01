@@ -1,0 +1,1 @@
+// Paste the calculator logic into script.js after upload
