@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Compound Interest Explorer</title>
+  <title>Compound Interest Explorer • V7</title>
   <style>
     :root { --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91c0cb; --card:#ffffff; }
     * { box-sizing: border-box; }
-    body { margin:0; font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+    body { margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); }
     .wrap { max-width: 860px; margin: 40px auto; padding: 24px; }
     .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
     h1 { margin: 0 0 16px; color: var(--accent); font-size: 1.8rem; }
+    .badge { display:inline-block; margin:0 0 10px; padding:6px 10px; border-radius:999px; background:#e8f5e9; color:#2e7d32; font-size:.85rem; }
     .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     label { font-weight: 600; display: flex; flex-direction: column; gap: 6px; }
     input, select, button { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font: inherit; }
     button { background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 700; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
     .actions { margin-top: 8px; display:flex; gap: 8px; flex-wrap: wrap; }
     .note { margin: 12px 0 0; font-size: .9rem; color:#444; }
-    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:linear-gradient(0deg,#fff,#fff) padding-box, linear-gradient(45deg,var(--muted),#d8c3a5) border-box; }
+    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:linear-gradient(0deg,#fff,#fff) padding-box, linear-gradient(45deg,var(--muted),#d8c3a5) border-box; min-height: 44px; }
     table { width:100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right; }
     th:first-child, td:first-child { text-align: left; }
@@ -31,6 +31,7 @@
   <div class="wrap">
     <div class="card">
       <h1>Compound Interest Explorer</h1>
+      <div class="badge">Version V7 • JS inline</div>
       <div class="grid">
         <label>Starting amount (A$)
           <input type="number" id="principal" value="1000" min="0" step="50" required>
@@ -55,7 +56,7 @@
         </label>
       </div>
       <div class="actions">
-        <button id="calc">Calculate</button>
+        <button id="calc" type="button">Calculate</button>
         <button id="reset" type="button">Reset</button>
       </div>
       <p class="note">Tip: “Regular contribution” is the amount you add <em>each compounding period</em> (e.g., each month if monthly compounding).</p>
@@ -65,59 +66,60 @@
   </div>
 
   <script>
-    const $ = sel => document.querySelector(sel);
-    const currency = x => x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
+    const $ = s => document.querySelector(s);
+    const currency = x => Number(x||0).toLocaleString('en-AU',{style:'currency',currency:'AUD'});
 
-    function compute({ P, r, n, t, C }) {
-      const periods = Math.round(n * t);
-      const i = r / n;
-      let balance = P;
-      const rows = [];
-      for (let k = 1; k <= periods; k++) {
-        balance = (balance + C) * (1 + i);
-        if (k % n === 0) rows.push({ year: k / n, balance });
+    function compute({P,r,n,t,C}) {
+      const periods = Math.round(n*t), i = r/n;
+      let balance = P; const rows = [];
+      for (let k=1;k<=periods;k++){
+        balance = (balance + C) * (1+i);
+        if (k % n === 0) rows.push({ year:k/n, balance });
       }
       return { balance, rows };
     }
 
-    function run() {
-      const P = +$('#principal').value || 0;
-      const r = (+$('#rate').value || 0) / 100;
-      const t = +$('#years').value || 0;
-      const n = +$('#n').value || 1;
-      const C = +$('#contrib').value || 0;
+    function vals(){
+      return {
+        P: parseFloat($('#principal').value)||0,
+        r: (parseFloat($('#rate').value)||0)/100,
+        t: parseFloat($('#years').value)||0,
+        n: parseInt($('#n').value,10)||1,
+        C: parseFloat($('#contrib').value)||0
+      };
+    }
 
-      const { balance, rows } = compute({ P, r, n, t, C });
-      const contribTotal = C * n * t;
+    function render(){
+      const {P,r,n,t,C} = vals();
+      const {balance, rows} = compute({P,r,n,t,C});
+      const contribTotal = C*n*t;
       const totalPutIn = P + contribTotal;
-      const interestEarned = balance - totalPutIn;
+      const interest = balance - totalPutIn;
 
       $('#results').innerHTML = `
         <div class="totals">
           <div class="pill"><strong>Final balance:</strong> ${currency(balance)}</div>
           <div class="pill"><strong>Total contributed:</strong> ${currency(totalPutIn)}</div>
-          <div class="pill"><strong>Interest earned:</strong> ${currency(interestEarned)}</div>
+          <div class="pill"><strong>Interest earned:</strong> ${currency(interest)}</div>
         </div>
         <table>
           <thead><tr><th>Year</th><th>Balance</th></tr></thead>
-          <tbody>
-            ${rows.map(r => `<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}
-          </tbody>
-        </table>
-      `;
+          <tbody>${rows.map(r=>`<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}</tbody>
+        </table>`;
     }
 
-    $('#calc').addEventListener('click', run);
-    $('#reset').addEventListener('click', () => {
-      $('#principal').value = 1000;
-      $('#rate').value = 6;
-      $('#years').value = 10;
-      $('#n').value = 12;
-      $('#contrib').value = 0;
-      run();
+    window.addEventListener('DOMContentLoaded', ()=>{
+      $('#calc').addEventListener('click', render);
+      $('#reset').addEventListener('click', ()=>{
+        $('#principal').value = 1000; $('#rate').value = 6; $('#years').value = 10; $('#n').value = 12; $('#contrib').value = 0;
+        render();
+      });
+      ['#principal','#rate','#years','#n','#contrib'].forEach(sel=>{
+        $(sel).addEventListener('input', render);
+        $(sel).addEventListener('change', render);
+      });
+      render();
     });
-
-    window.addEventListener('DOMContentLoaded', run);
   </script>
 </body>
 </html>
