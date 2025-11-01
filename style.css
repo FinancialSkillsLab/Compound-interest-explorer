@@ -7,3 +7,5 @@ input, button { padding:10px; margin-top:5px; border-radius:8px; border:1px soli
 .btn.primary { background:#0BB4A6; color:white; border:none; }
 .btn:hover { opacity:0.9; }
 .footer-tip { margin-top:20px; font-size:0.9rem; color:#555; font-style:italic; }
+/* Hide any residual host or read-more badges */
+.kicker, .read-more { display:none !important; }
