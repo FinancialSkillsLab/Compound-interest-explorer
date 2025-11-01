@@ -1,1 +1,123 @@
-Test working
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Compound Interest Explorer</title>
+  <style>
+    :root { --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91c0cb; --card:#ffffff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+    .wrap { max-width: 860px; margin: 40px auto; padding: 24px; }
+    .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1 { margin: 0 0 16px; color: var(--accent); font-size: 1.8rem; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    label { font-weight: 600; display: flex; flex-direction: column; gap: 6px; }
+    input, select, button { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font: inherit; }
+    button { background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 700; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .actions { margin-top: 8px; display:flex; gap: 8px; flex-wrap: wrap; }
+    .note { margin: 12px 0 0; font-size: .9rem; color:#444; }
+    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:linear-gradient(0deg,#fff,#fff) padding-box, linear-gradient(45deg,var(--muted),#d8c3a5) border-box; }
+    table { width:100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    .totals { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:8px; margin:8px 0 0; }
+    .pill { background:#f6f7f8; padding:10px 12px; border-radius:12px; }
+    footer { margin-top: 18px; font-size: .85rem; color:#666; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Compound Interest Explorer</h1>
+      <div class="grid">
+        <label>Starting amount (A$)
+          <input type="number" id="principal" value="1000" min="0" step="50" required>
+        </label>
+        <label>Annual interest (% p.a.)
+          <input type="number" id="rate" value="6" min="0" step="0.1" required>
+        </label>
+        <label>Years
+          <input type="number" id="years" value="10" min="1" step="1" required>
+        </label>
+        <label>Compounding
+          <select id="n">
+            <option value="1">Annually</option>
+            <option value="12" selected>Monthly</option>
+            <option value="26">Fortnightly</option>
+            <option value="52">Weekly</option>
+            <option value="365">Daily</option>
+          </select>
+        </label>
+        <label>Regular contribution (A$ per period)
+          <input type="number" id="contrib" value="0" min="0" step="10">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="calc">Calculate</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+      <p class="note">Tip: “Regular contribution” is the amount you add <em>each compounding period</em> (e.g., each month if monthly compounding).</p>
+      <div id="results" aria-live="polite"></div>
+      <footer>For education only. Assumes a constant rate and regular contributions. Figures are indicative, not financial advice.</footer>
+    </div>
+  </div>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    const currency = x => x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
+
+    function compute({ P, r, n, t, C }) {
+      const periods = Math.round(n * t);
+      const i = r / n;
+      let balance = P;
+      const rows = [];
+      for (let k = 1; k <= periods; k++) {
+        balance = (balance + C) * (1 + i);
+        if (k % n === 0) rows.push({ year: k / n, balance });
+      }
+      return { balance, rows };
+    }
+
+    function run() {
+      const P = +$('#principal').value || 0;
+      const r = (+$('#rate').value || 0) / 100;
+      const t = +$('#years').value || 0;
+      const n = +$('#n').value || 1;
+      const C = +$('#contrib').value || 0;
+
+      const { balance, rows } = compute({ P, r, n, t, C });
+      const contribTotal = C * n * t;
+      const totalPutIn = P + contribTotal;
+      const interestEarned = balance - totalPutIn;
+
+      $('#results').innerHTML = `
+        <div class="totals">
+          <div class="pill"><strong>Final balance:</strong> ${currency(balance)}</div>
+          <div class="pill"><strong>Total contributed:</strong> ${currency(totalPutIn)}</div>
+          <div class="pill"><strong>Interest earned:</strong> ${currency(interestEarned)}</div>
+        </div>
+        <table>
+          <thead><tr><th>Year</th><th>Balance</th></tr></thead>
+          <tbody>
+            ${rows.map(r => `<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    $('#calc').addEventListener('click', run);
+    $('#reset').addEventListener('click', () => {
+      $('#principal').value = 1000;
+      $('#rate').value = 6;
+      $('#years').value = 10;
+      $('#n').value = 12;
+      $('#contrib').value = 0;
+      run();
+    });
+
+    window.addEventListener('DOMContentLoaded', run);
+  </script>
+</body>
+</html>
