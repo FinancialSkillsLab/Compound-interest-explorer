@@ -1,137 +1,238 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Compound Interest Explorer</title>
-  <style>
-    :root { --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91c0cb; --card:#ffffff; }
-    * { box-sizing: border-box; }
-    body { margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); }
-    .wrap { max-width: 900px; margin: 40px auto; padding: 24px; }
-    .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    h1 { margin: 0 0 16px; color: var(--accent); font-size: 1.8rem; }
-    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); }
-    label { font-weight: 600; display: flex; flex-direction: column; gap: 6px; }
-    input, select, button { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font: inherit; }
-    button { background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 700; }
-    .actions { margin-top: 8px; display:flex; gap: 8px; flex-wrap: wrap; }
-    .note { margin: 12px 0 0; font-size: .9rem; color:#444; }
-    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:#fff; }
-    table { width:100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right; }
-    th:first-child, td:first-child { text-align: left; }
-    .totals { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:8px; margin:8px 0 0; }
-    .pill { background:#f6f7f8; padding:10px 12px; border-radius:12px; }
-    footer { margin-top: 18px; font-size: .85rem; color:#666; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Watch Your Savings Grow</title>
+<style>
+  :root{
+    /* TUSA-ish palette */
+    --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91C0CB; --card:#ffffff;
+    --pill:#f4f6f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .wrap{max-width:1200px;margin:40px auto;padding:24px}
+  .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);padding:24px}
+  h1{margin:0 0 8px;color:var(--accent);font-size:2rem}
+  h2{margin:0 0 12px;color:var(--accent);font-size:1.25rem}
+
+  /* Intro */
+  .intro{display:grid;gap:16px;justify-items:start;text-align:left}
+  .lead{max-width:70ch}
+  .cta{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{appearance:none;border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-ghost{background:#fff;border:1px solid #e6e6e6;color:var(--accent)}
+
+  /* Simulator layout */
+  .layout{display:grid;gap:24px;grid-template-columns:420px 1fr}
+  @media (max-width: 960px){ .layout{grid-template-columns:1fr} }
+
+  .grid{display:grid;gap:12px}
+  label{font-weight:600;display:flex;flex-direction:column;gap:6px}
+  input,select{padding:10px 12px;border:1px solid #ddd;border-radius:10px;font:inherit}
+  .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .note{margin:10px 0 0;font-size:.9rem;color:#444}
+
+  /* Results (right pane) */
+  #results{display:block}
+  .totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:8px 0 16px}
+  .pill{background:var(--pill);padding:10px 12px;border-radius:12px}
+  .group{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px}
+  .legend{display:flex;gap:10px;align-items:center;margin:2px 0 10px}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
+  .swatch-a{background:#1f6feb}
+  .swatch-b{background:#2da44e}
+
+  table{width:100%;border-collapse:collapse;margin-top:14px;background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden}
+  th,td{padding:10px 12px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  tfoot td{font-weight:700}
+
+  footer{margin-top:18px;font-size:.85rem;color:#666}
+  .hide{display:none}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Compound Interest Explorer</h1>
-      <div class="grid">
-        <label>Starting amount (A$)<input type="number" id="principal" value="1000"></label>
-        <label>Annual interest (% p.a.)<input type="number" id="rate" value="6"></label>
-        <label>Years<input type="number" id="years" value="10"></label>
-        <label>Compounding
-          <select id="n">
-            <option value="1">Annually</option>
-            <option value="12" selected>Monthly</option>
-            <option value="26">Fortnightly</option>
-            <option value="52">Weekly</option>
-            <option value="365">Daily</option>
-          </select>
-        </label>
-        <label>Regular contribution (A$ per period)<input type="number" id="contrib" value="0"></label>
-      </div>
-      <div class="actions">
-        <button id="calc">Calculate</button>
-        <button id="reset" type="button">Reset</button>
-      </div>
-      <p class="note">Tip: “Regular contribution” is the amount you add each compounding period.</p>
+<div class="wrap">
 
-      <div id="results" aria-live="polite"></div>
-
-      <footer>For education only.</footer>
+  <!-- INTRO VIEW -->
+  <div id="intro" class="card intro">
+    <h1>Watch Your Savings Grow</h1>
+    <p class="lead">See how small weekly savings add up over time. Weekly deposits with monthly compounding. Compare two start ages to see the value of starting earlier.</p>
+    <div class="cta">
+      <button class="btn btn-primary" id="start">Start</button>
+      <a class="btn btn-ghost" href="#sim">Read more AWU416 →</a>
     </div>
   </div>
 
+  <!-- SIMULATOR VIEW -->
+  <div id="sim" class="card hide">
+    <div class="layout">
+      <!-- LEFT: Inputs -->
+      <div>
+        <h2>Inputs</h2>
+        <div class="grid">
+          <label>Weekly savings (A$)
+            <input type="number" id="weekly" value="50" min="0" step="1">
+          </label>
+          <label>Annual interest rate (% p.a.)
+            <input type="number" id="rate" value="7" min="0" step="0.1">
+          </label>
+          <label>Start age – Scenario A
+            <input type="number" id="startA" value="20" min="0" step="1">
+          </label>
+          <label>Start age – Scenario B
+            <input type="number" id="startB" value="30" min="0" step="1">
+          </label>
+          <label>Retirement age
+            <input type="number" id="retire" value="65" min="1" step="1">
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="run">Run</button>
+          <button class="btn" id="reset">Reset</button>
+        </div>
+        <p class="note">Assumes a constant rate, weekly contributions converted to monthly (52/12), monthly compounding.</p>
+      </div>
+
+      <!-- RIGHT: Results (totals → chart → table) -->
+      <div id="results">
+        <!-- totals, chart + table are injected here -->
+      </div>
+    </div>
+    <footer>For education only. Figures are indicative; not financial advice.</footer>
+  </div>
+</div>
+
 <script>
 const $ = s => document.querySelector(s);
-const currency = x => Number(x||0).toLocaleString('en-AU',{style:'currency',currency:'AUD'});
+const currency = v => Number(v||0).toLocaleString('en-AU',{style:'currency',currency:'AUD'});
 
-function compute({P,r,n,t,C}) {
-  const periods = n*t;
-  const i = r/n;
-  let balance = P, yearly=[];
-  for (let k=1;k<=periods;k++){
-    balance = (balance + C) * (1+i);
-    if(k % n === 0) yearly.push({year:k/n,balance});
+function simulate({weekly, rate, startAge, retireAge}){
+  const months = Math.max(0, (retireAge - startAge) * 12);
+  const rMonthly = rate/100/12;
+  const monthlyDeposit = weekly * 52/12; // weekly → monthly
+  let bal = 0, yearly = [];
+  for(let m=1; m<=months; m++){
+    bal = (bal + monthlyDeposit) * (1 + rMonthly);
+    if(m % 12 === 0){
+      const age = startAge + (m/12);
+      yearly.push({ age, balance: bal });
+    }
   }
-  return {balance, yearly};
+  return { final: bal, yearly };
+}
+
+function buildTable(rowsA, rowsB, minAge, maxAge){
+  let html = `
+    <table>
+      <thead>
+        <tr><th>Age</th><th>A: start ${minAge} balance</th><th>B: start ${Math.min(...rowsB.map(r=>r.age)) || '-'} balance</th></tr>
+      </thead>
+      <tbody>
+  `;
+  // Build a map for quick lookup
+  const mapA = new Map(rowsA.map(r=>[Math.round(r.age), r.balance]));
+  const mapB = new Map(rowsB.map(r=>[Math.round(r.age), r.balance]));
+  for(let age=Math.floor(minAge); age<=Math.floor(maxAge); age++){
+    const a = mapA.get(age) ?? 0;
+    const b = mapB.get(age) ?? 0;
+    html += `<tr><td>${age}</td><td>${a?currency(a):'—'}</td><td>${b?currency(b):'—'}</td></tr>`;
+  }
+  html += `</tbody></table>`;
+  return html;
 }
 
 let chart;
 
 function render(){
-  const P = +$('#principal').value||0;
-  const r = (+$('#rate').value||0)/100;
-  const t = +$('#years').value||0;
-  const n = +$('#n').value||1;
-  const C = +$('#contrib').value||0;
+  const weekly = +$('#weekly').value||0;
+  const rate   = +$('#rate').value||0;
+  const startA = +$('#startA').value||0;
+  const startB = +$('#startB').value||0;
+  const retire = +$('#retire').value||0;
 
-  const {balance, yearly} = compute({P,r,n,t,C});
-  const contribTotal = C*n*t;
-  const totalPutIn = P + contribTotal;
-  const interest = balance-totalPutIn;
+  const simA = simulate({weekly, rate, startAge: startA, retireAge: retire});
+  const simB = simulate({weekly, rate, startAge: startB, retireAge: retire});
 
+  const minStart = Math.min(startA, startB);
+  const labels = [];
+  const dataA = [];
+  const dataB = [];
+  const endAge = retire;
+
+  // Build yearly series aligned from minStart → retire
+  const mapA = new Map(simA.yearly.map(r=>[Math.round(r.age), r.balance]));
+  const mapB = new Map(simB.yearly.map(r=>[Math.round(r.age), r.balance]));
+  for(let age=Math.floor(minStart); age<=Math.floor(endAge); age++){
+    labels.push(age);
+    dataA.push(mapA.get(age) || null);
+    dataB.push(mapB.get(age) || null);
+  }
+
+  const diff = simA.final - simB.final;
+
+  // Results HTML (totals → chart → table)
   $('#results').innerHTML = `
+    <h2>Growth Over Time</h2>
     <div class="totals">
-      <div class="pill"><strong>Final balance:</strong> ${currency(balance)}</div>
-      <div class="pill"><strong>Total contributed:</strong> ${currency(totalPutIn)}</div>
-      <div class="pill"><strong>Interest earned:</strong> ${currency(interest)}</div>
+      <div class="pill"><strong>A: start age ${startA} — Final:</strong> ${currency(simA.final)}</div>
+      <div class="pill"><strong>B: start age ${startB} — Final:</strong> ${currency(simB.final)}</div>
+      <div class="pill"><strong>Value of starting earlier:</strong> ${currency(diff)}</div>
     </div>
 
-    <table>
-      <thead><tr><th>Year</th><th>Balance</th></tr></thead>
-      <tbody>
-        ${yearly.map(r => `<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}
-      </tbody>
-    </table>
+    <div class="group">
+      <div class="legend">
+        <span class="swatch swatch-a"></span> A: start age ${startA}
+        <span style="width:12px;display:inline-block"></span>
+        <span class="swatch swatch-b"></span> B: start age ${startB}
+      </div>
+      <canvas id="chart" height="220" aria-label="Balance over time"></canvas>
 
-    <div style="margin-top:20px;">
-      <canvas id="chart" height="200"></canvas>
+      ${buildTable(simA.yearly, simB.yearly, minStart, endAge)}
     </div>
   `;
 
-  const ctx = $('#chart').getContext('2d');
+  const ctx = document.getElementById('chart').getContext('2d');
   if(chart) chart.destroy();
-  chart = new Chart(ctx,{
+  chart = new Chart(ctx, {
     type:'line',
     data:{
-      labels:yearly.map(r=>r.year),
-      datasets:[{data:yearly.map(r=>r.balance),tension:0.25}]
+      labels,
+      datasets:[
+        {label:`A: start age ${startA}`, data:dataA, borderColor:'#1f6feb', backgroundColor:'transparent', tension:.25, spanGaps:true},
+        {label:`B: start age ${startB}`, data:dataB, borderColor:'#2da44e', backgroundColor:'transparent', tension:.25, spanGaps:true}
+      ]
     },
     options:{
       plugins:{legend:{display:false}},
-      scales:{y:{ticks:{callback:v=>currency(v)}}}
+      scales:{
+        x:{title:{display:true,text:'Age'}},
+        y:{title:{display:true,text:'Balance (A$)'}, ticks:{callback:v=>currency(v)}}
+      }
     }
   });
 }
 
-$('#calc').addEventListener('click',render);
-$('#reset').addEventListener('click',()=>{
-  $('#principal').value=1000;
-  $('#rate').value=6;
-  $('#years').value=10;
-  $('#n').value=12;
-  $('#contrib').value=0;
+/* Intro → Simulator */
+$('#start').addEventListener('click', ()=>{
+  $('#intro').classList.add('hide');
+  $('#sim').classList.remove('hide');
   render();
 });
 
-window.addEventListener('DOMContentLoaded',render);
+/* Buttons */
+$('#run').addEventListener('click', render);
+$('#reset').addEventListener('click', ()=>{
+  $('#weekly').value=50; $('#rate').value=7; $('#startA').value=20; $('#startB').value=30; $('#retire').value=65;
+  render();
+});
+
+/* Load intro first */
+window.addEventListener('DOMContentLoaded', ()=>{ /* stay on intro until Start */ });
 </script>
 </body>
 </html>
