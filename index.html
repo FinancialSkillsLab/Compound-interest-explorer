@@ -5,78 +5,62 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Watch Your Savings Grow</title>
 <style>
-  :root{
-    /* TUSA-ish palette */
-    --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91C0CB; --card:#ffffff;
-    --pill:#f4f6f8;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-  .wrap{max-width:1200px;margin:40px auto;padding:24px}
-  .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);padding:24px}
-  h1{margin:0 0 8px;color:var(--accent);font-size:2rem}
-  h2{margin:0 0 12px;color:var(--accent);font-size:1.25rem}
+  :root{ --bg:#faf9f6; --ink:#292424; --accent:#004851; --muted:#91C0CB; --card:#ffffff; --pill:#f4f6f8; }
+  *{ box-sizing:border-box }
+  body{ margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg) }
+  .wrap{ max-width:1200px; margin:40px auto; padding:24px }
+  .card{ background:var(--card); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.06); padding:24px }
+  h1{ margin:0 0 8px; color:var(--accent); font-size:2rem }
+  h2{ margin:0 0 12px; color:var(--accent); font-size:1.25rem }
 
   /* Intro */
-  .intro{display:grid;gap:16px;justify-items:start;text-align:left}
-  .lead{max-width:70ch}
-  .cta{display:flex;gap:10px;flex-wrap:wrap}
-  .btn{appearance:none;border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-ghost{background:#fff;border:1px solid #e6e6e6;color:var(--accent)}
+  .intro{ display:grid; gap:16px; justify-items:start }
+  .lead{ max-width:70ch }
+  .btn{ appearance:none; border:1px solid #e6e6e6; border-radius:12px; padding:12px 18px; font-weight:700; cursor:pointer; background:#fff; color:var(--accent) }
+  .btn-primary{ background:var(--accent); color:#fff; border-color:transparent }
 
-  /* Simulator layout */
-  .layout{display:grid;gap:24px;grid-template-columns:420px 1fr}
-  @media (max-width: 960px){ .layout{grid-template-columns:1fr} }
+  /* Layout */
+  .layout{ display:grid; gap:24px; grid-template-columns:420px 1fr }
+  @media (max-width:960px){ .layout{ grid-template-columns:1fr } }
 
-  .grid{display:grid;gap:12px}
-  label{font-weight:600;display:flex;flex-direction:column;gap:6px}
-  input,select{padding:10px 12px;border:1px solid #ddd;border-radius:10px;font:inherit}
-  .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-  .note{margin:10px 0 0;font-size:.9rem;color:#444}
+  /* Inputs */
+  .grid{ display:grid; gap:12px }
+  label{ font-weight:600; display:flex; flex-direction:column; gap:6px }
+  input{ padding:10px 12px; border:1px solid #ddd; border-radius:10px; font:inherit }
+  .actions{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap }
+  .note{ margin:10px 0 0; font-size:.9rem; color:#444 }
 
-  /* Results (right pane) */
-  #results{display:block}
-  .totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:8px 0 16px}
-  .pill{background:var(--pill);padding:10px 12px;border-radius:12px}
-  .group{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px}
-  .legend{display:flex;gap:10px;align-items:center;margin:2px 0 10px}
-  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
-  .swatch-a{background:#1f6feb}
-  .swatch-b{background:#2da44e}
+  /* Results */
+  #results{ display:block }
+  .pillrow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin:8px 0 16px }
+  .pill{ background:var(--pill); padding:10px 12px; border-radius:12px }
+  .group{ background:#fff; border:1px solid #eee; border-radius:12px; padding:16px }
 
-  table{width:100%;border-collapse:collapse;margin-top:14px;background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden}
-  th,td{padding:10px 12px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}
-  th:first-child,td:first-child{text-align:left}
-  tfoot td{font-weight:700}
+  /* Summary table */
+  table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden }
+  th,td{ padding:10px 12px; border-bottom:1px solid #eee; text-align:right; white-space:nowrap }
+  th:first-child,td:first-child{ text-align:left }
+  tfoot td{ font-weight:700 }
 
-  footer{margin-top:18px;font-size:.85rem;color:#666}
-  .hide{display:none}
+  footer{ margin-top:18px; font-size:.85rem; color:#666 }
+  .hide{ display:none }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- INTRO VIEW -->
+  <!-- INTRO -->
   <div id="intro" class="card intro">
     <h1>Watch Your Savings Grow</h1>
-    <p class="lead">See how small weekly savings add up over time. Weekly deposits with monthly compounding. Compare two start ages to see the value of starting earlier.</p>
-    <div class="cta">
-      <button class="btn btn-primary" id="start">Start</button>
- <a class="btn btn-ghost" href="#sim">Why starting early matters →</a>
-      <h1>Watch Your Savings Grow</h1>
-<p class="lead">
-See how small weekly savings add up over time. Adjust your starting age and see how 
-beginning even a little earlier can help grow your wealth over the long term.
-</p>
-    </div>
+    <p class="lead">See how small weekly savings add up over time. Adjust your starting age to compare two scenarios and discover why starting earlier helps your future self.</p>
+    <button class="btn btn-primary" id="start">Start</button>
   </div>
 
-  <!-- SIMULATOR VIEW -->
+  <!-- SIMULATOR -->
   <div id="sim" class="card hide">
     <div class="layout">
-      <!-- LEFT: Inputs -->
+      <!-- Left: Inputs -->
       <div>
         <h2>Inputs</h2>
         <div class="grid">
@@ -86,10 +70,10 @@ beginning even a little earlier can help grow your wealth over the long term.
           <label>Annual interest rate (% p.a.)
             <input type="number" id="rate" value="7" min="0" step="0.1">
           </label>
-          <label>Start age – Scenario A
+          <label>Start age — Scenario A
             <input type="number" id="startA" value="20" min="0" step="1">
           </label>
-          <label>Start age – Scenario B
+          <label>Start age — Scenario B
             <input type="number" id="startB" value="30" min="0" step="1">
           </label>
           <label>Retirement age
@@ -100,13 +84,11 @@ beginning even a little earlier can help grow your wealth over the long term.
           <button class="btn btn-primary" id="run">Run</button>
           <button class="btn" id="reset">Reset</button>
         </div>
-        <p class="note">Assumes a constant rate, weekly contributions converted to monthly (52/12), monthly compounding.</p>
+        <p class="note">Assumes weekly deposits converted to monthly (52/12) with monthly compounding and a constant annual rate.</p>
       </div>
 
-      <!-- RIGHT: Results (totals → chart → table) -->
-      <div id="results">
-        <!-- totals, chart + table are injected here -->
-      </div>
+      <!-- Right: Results -->
+      <div id="results"></div>
     </div>
     <footer>For education only. Figures are indicative; not financial advice.</footer>
   </div>
@@ -116,42 +98,75 @@ beginning even a little earlier can help grow your wealth over the long term.
 const $ = s => document.querySelector(s);
 const currency = v => Number(v||0).toLocaleString('en-AU',{style:'currency',currency:'AUD'});
 
+/* Core simulation: weekly deposit -> monthly, monthly compounding */
 function simulate({weekly, rate, startAge, retireAge}){
   const months = Math.max(0, (retireAge - startAge) * 12);
   const rMonthly = rate/100/12;
-  const monthlyDeposit = weekly * 52/12; // weekly → monthly
-  let bal = 0, yearly = [];
+  const monthlyDeposit = weekly * 52/12;
+  let bal = 0;
   for(let m=1; m<=months; m++){
     bal = (bal + monthlyDeposit) * (1 + rMonthly);
-    if(m % 12 === 0){
-      const age = startAge + (m/12);
-      yearly.push({ age, balance: bal });
-    }
   }
-  return { final: bal, yearly };
-}
-
-function buildTable(rowsA, rowsB, minAge, maxAge){
-  let html = `
-    <table>
-      <thead>
-        <tr><th>Age</th><th>A: start ${minAge} balance</th><th>B: start ${Math.min(...rowsB.map(r=>r.age)) || '-'} balance</th></tr>
-      </thead>
-      <tbody>
-  `;
-  // Build a map for quick lookup
-  const mapA = new Map(rowsA.map(r=>[Math.round(r.age), r.balance]));
-  const mapB = new Map(rowsB.map(r=>[Math.round(r.age), r.balance]));
-  for(let age=Math.floor(minAge); age<=Math.floor(maxAge); age++){
-    const a = mapA.get(age) ?? 0;
-    const b = mapB.get(age) ?? 0;
-    html += `<tr><td>${age}</td><td>${a?currency(a):'—'}</td><td>${b?currency(b):'—'}</td></tr>`;
-  }
-  html += `</tbody></table>`;
-  return html;
+  const years = (retireAge - startAge);
+  const totalContrib = monthlyDeposit * months;
+  return { final: bal, years, totalContrib, interest: bal - totalContrib };
 }
 
 let chart;
+
+/* Build summary table like your screenshot */
+function summaryTable(A, B, startA, startB){
+  return `
+  <h2>Scenario Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Start Age</th>
+        <th>Years Contributing</th>
+        <th>Total Contributed</th>
+        <th>Interest Earned</th>
+        <th>Final Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>A</strong></td>
+        <td>${startA}</td>
+        <td>${A.years.toFixed(1)}</td>
+        <td>${currency(A.totalContrib)}</td>
+        <td>${currency(A.interest)}</td>
+        <td>${currency(A.final)}</td>
+      </tr>
+      <tr>
+        <td><strong>B</strong></td>
+        <td>${startB}</td>
+        <td>${B.years.toFixed(1)}</td>
+        <td>${currency(B.totalContrib)}</td>
+        <td>${currency(B.interest)}</td>
+        <td>${currency(B.final)}</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+/* For the chart, generate aligned yearly points so the growth curves show */
+function yearlySeries({weekly, rate, startAge, retireAge}){
+  const rMonthly = rate/100/12;
+  const monthlyDeposit = weekly * 52/12;
+  const labels = [];
+  const data = [];
+  let bal = 0;
+  for(let age = startAge+1; age<=retireAge; age++){
+    // simulate 12 months for that year
+    for(let m=0; m<12; m++){
+      bal = (bal + monthlyDeposit) * (1 + rMonthly);
+    }
+    labels.push(age);
+    data.push(bal);
+  }
+  return { labels, data };
+}
 
 function render(){
   const weekly = +$('#weekly').value||0;
@@ -160,84 +175,74 @@ function render(){
   const startB = +$('#startB').value||0;
   const retire = +$('#retire').value||0;
 
-  const simA = simulate({weekly, rate, startAge: startA, retireAge: retire});
-  const simB = simulate({weekly, rate, startAge: startB, retireAge: retire});
+  const A = simulate({weekly, rate, startAge:startA, retireAge:retire});
+  const B = simulate({weekly, rate, startAge:startB, retireAge:retire});
+  const seriesA = yearlySeries({weekly, rate, startAge:startA, retireAge:retire});
+  const seriesB = yearlySeries({weekly, rate, startAge:startB, retireAge:retire});
 
-  const minStart = Math.min(startA, startB);
-  const labels = [];
-  const dataA = [];
-  const dataB = [];
-  const endAge = retire;
-
-  // Build yearly series aligned from minStart → retire
-  const mapA = new Map(simA.yearly.map(r=>[Math.round(r.age), r.balance]));
-  const mapB = new Map(simB.yearly.map(r=>[Math.round(r.age), r.balance]));
-  for(let age=Math.floor(minStart); age<=Math.floor(endAge); age++){
-    labels.push(age);
-    dataA.push(mapA.get(age) || null);
-    dataB.push(mapB.get(age) || null);
-  }
-
-  const diff = simA.final - simB.final;
-
-  // Results HTML (totals → chart → table)
+  // Right pane: totals (value of starting earlier), summary table, then chart
+  const diff = A.final - B.final;
   $('#results').innerHTML = `
     <h2>Growth Over Time</h2>
-    <div class="totals">
-      <div class="pill"><strong>A: start age ${startA} — Final:</strong> ${currency(simA.final)}</div>
-      <div class="pill"><strong>B: start age ${startB} — Final:</strong> ${currency(simB.final)}</div>
+    <div class="pillrow">
+      <div class="pill"><strong>A: start age ${startA} — Final:</strong> ${currency(A.final)}</div>
+      <div class="pill"><strong>B: start age ${startB} — Final:</strong> ${currency(B.final)}</div>
       <div class="pill"><strong>Value of starting earlier:</strong> ${currency(diff)}</div>
     </div>
 
-    <div class="group">
-      <div class="legend">
-        <span class="swatch swatch-a"></span> A: start age ${startA}
-        <span style="width:12px;display:inline-block"></span>
-        <span class="swatch swatch-b"></span> B: start age ${startB}
-      </div>
-      <canvas id="chart" height="220" aria-label="Balance over time"></canvas>
+    <div class="group" style="margin-bottom:16px;">
+      ${summaryTable(A,B,startA,startB)}
+    </div>
 
-      ${buildTable(simA.yearly, simB.yearly, minStart, endAge)}
+    <div class="group">
+      <canvas id="chart" height="220" aria-label="Balance over time"></canvas>
     </div>
   `;
 
   const ctx = document.getElementById('chart').getContext('2d');
-  if(chart) chart.destroy();
-  chart = new Chart(ctx, {
+  if (chart) chart.destroy();
+  // Align labels from the youngest start to retirement
+  const minAge = Math.min(startA, startB);
+  const maxAge = retire;
+  const labels = [];
+  for(let age=minAge+1; age<=maxAge; age++){ labels.push(age); }
+
+  // Map series to global labels (with gaps before each start age)
+  const mapA = new Map(seriesA.labels.map((a,i)=>[a, seriesA.data[i]]));
+  const mapB = new Map(seriesB.labels.map((a,i)=>[a, seriesB.data[i]]));
+  const dataA = labels.map(a => mapA.get(a) ?? null);
+  const dataB = labels.map(a => mapB.get(a) ?? null);
+
+  chart = new Chart(ctx,{
     type:'line',
     data:{
       labels,
       datasets:[
-        {label:`A: start age ${startA}`, data:dataA, borderColor:'#1f6feb', backgroundColor:'transparent', tension:.25, spanGaps:true},
-        {label:`B: start age ${startB}`, data:dataB, borderColor:'#2da44e', backgroundColor:'transparent', tension:.25, spanGaps:true}
+        { label:`A: start age ${startA}`, data:dataA, borderColor:'#1f6feb', backgroundColor:'transparent', tension:.25, spanGaps:true },
+        { label:`B: start age ${startB}`, data:dataB, borderColor:'#2da44e', backgroundColor:'transparent', tension:.25, spanGaps:true }
       ]
     },
     options:{
-      plugins:{legend:{display:false}},
+      plugins:{ legend:{ display:true } },
       scales:{
-        x:{title:{display:true,text:'Age'}},
-        y:{title:{display:true,text:'Balance (A$)'}, ticks:{callback:v=>currency(v)}}
+        x:{ title:{ display:true, text:'Age' } },
+        y:{ title:{ display:true, text:'Balance (A$)' }, ticks:{ callback:v=>currency(v) } }
       }
     }
   });
 }
 
 /* Intro → Simulator */
-$('#start').addEventListener('click', ()=>{
-  $('#intro').classList.add('hide');
-  $('#sim').classList.remove('hide');
-  render();
-});
+$('#start').addEventListener('click', ()=>{ document.getElementById('intro').classList.add('hide'); document.getElementById('sim').classList.remove('hide'); render(); });
 
 /* Buttons */
-$('#run').addEventListener('click', render);
-$('#reset').addEventListener('click', ()=>{
+document.getElementById('run').addEventListener('click', render);
+document.getElementById('reset').addEventListener('click', ()=>{
   $('#weekly').value=50; $('#rate').value=7; $('#startA').value=20; $('#startB').value=30; $('#retire').value=65;
   render();
 });
 
-/* Load intro first */
-window.addEventListener('DOMContentLoaded', ()=>{ /* stay on intro until Start */ });
+/* Load intro first (no auto-render) */
 </script>
 </body>
 </html>
