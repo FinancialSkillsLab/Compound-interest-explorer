@@ -17,16 +17,14 @@
     button { background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 700; }
     .actions { margin-top: 8px; display:flex; gap: 8px; flex-wrap: wrap; }
     .note { margin: 12px 0 0; font-size: .9rem; color:#444; }
-    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:linear-gradient(0deg,#fff,#fff) padding-box, linear-gradient(45deg,var(--muted),#d8c3a5) border-box; }
+    #results { margin-top: 18px; padding: 16px; border:1px solid #eee; border-radius:12px; background:#fff; }
     table { width:100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right; }
     th:first-child, td:first-child { text-align: left; }
     .totals { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:8px; margin:8px 0 0; }
     .pill { background:#f6f7f8; padding:10px 12px; border-radius:12px; }
-    .chart-wrap { margin-top:18px; padding:16px; background:#fff; border:1px solid #eee; border-radius:12px; }
     footer { margin-top: 18px; font-size: .85rem; color:#666; }
   </style>
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -34,15 +32,9 @@
     <div class="card">
       <h1>Compound Interest Explorer</h1>
       <div class="grid">
-        <label>Starting amount (A$)
-          <input type="number" id="principal" value="1000" min="0" step="50" required>
-        </label>
-        <label>Annual interest (% p.a.)
-          <input type="number" id="rate" value="6" min="0" step="0.1" required>
-        </label>
-        <label>Years
-          <input type="number" id="years" value="10" min="1" step="1" required>
-        </label>
+        <label>Starting amount (A$)<input type="number" id="principal" value="1000"></label>
+        <label>Annual interest (% p.a.)<input type="number" id="rate" value="6"></label>
+        <label>Years<input type="number" id="years" value="10"></label>
         <label>Compounding
           <select id="n">
             <option value="1">Annually</option>
@@ -52,122 +44,94 @@
             <option value="365">Daily</option>
           </select>
         </label>
-        <label>Regular contribution (A$ per period)
-          <input type="number" id="contrib" value="0" min="0" step="10">
-        </label>
+        <label>Regular contribution (A$ per period)<input type="number" id="contrib" value="0"></label>
       </div>
       <div class="actions">
-        <button id="calc" type="button">Calculate</button>
+        <button id="calc">Calculate</button>
         <button id="reset" type="button">Reset</button>
       </div>
-      <p class="note">Tip: “Regular contribution” is the amount you add <em>each compounding period</em> (e.g., each month if monthly compounding).</p>
+      <p class="note">Tip: “Regular contribution” is the amount you add each compounding period.</p>
 
       <div id="results" aria-live="polite"></div>
 
-      <div class="chart-wrap">
-        <canvas id="chart" height="200" aria-label="Balance over time"></canvas>
-      </div>
-
-      <footer>For education only. Assumes a constant rate and regular contributions. Figures are indicative, not financial advice.</footer>
+      <footer>For education only.</footer>
     </div>
   </div>
 
-  <script>
-    const $ = s => document.querySelector(s);
-    const currency = x => Number(x||0).toLocaleString('en-AU', { style:'currency', currency:'AUD' });
+<script>
+const $ = s => document.querySelector(s);
+const currency = x => Number(x||0).toLocaleString('en-AU',{style:'currency',currency:'AUD'});
 
-    function compute({ P, r, n, t, C }) {
-      const periods = Math.round(n * t);
-      const i = r / n;
-      let balance = P;
-      const yearly = [];
-      for (let k = 1; k <= periods; k++) {
-        balance = (balance + C) * (1 + i);
-        if (k % n === 0) yearly.push({ year: k / n, balance });
-      }
-      return { balance, yearly };
+function compute({P,r,n,t,C}) {
+  const periods = n*t;
+  const i = r/n;
+  let balance = P, yearly=[];
+  for (let k=1;k<=periods;k++){
+    balance = (balance + C) * (1+i);
+    if(k % n === 0) yearly.push({year:k/n,balance});
+  }
+  return {balance, yearly};
+}
+
+let chart;
+
+function render(){
+  const P = +$('#principal').value||0;
+  const r = (+$('#rate').value||0)/100;
+  const t = +$('#years').value||0;
+  const n = +$('#n').value||1;
+  const C = +$('#contrib').value||0;
+
+  const {balance, yearly} = compute({P,r,n,t,C});
+  const contribTotal = C*n*t;
+  const totalPutIn = P + contribTotal;
+  const interest = balance-totalPutIn;
+
+  $('#results').innerHTML = `
+    <div class="totals">
+      <div class="pill"><strong>Final balance:</strong> ${currency(balance)}</div>
+      <div class="pill"><strong>Total contributed:</strong> ${currency(totalPutIn)}</div>
+      <div class="pill"><strong>Interest earned:</strong> ${currency(interest)}</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Year</th><th>Balance</th></tr></thead>
+      <tbody>
+        ${yearly.map(r => `<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}
+      </tbody>
+    </table>
+
+    <div style="margin-top:20px;">
+      <canvas id="chart" height="200"></canvas>
+    </div>
+  `;
+
+  const ctx = $('#chart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:yearly.map(r=>r.year),
+      datasets:[{data:yearly.map(r=>r.balance),tension:0.25}]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>currency(v)}}}
     }
+  });
+}
 
-    function values() {
-      return {
-        P: parseFloat($('#principal').value) || 0,
-        r: (parseFloat($('#rate').value) || 0) / 100,
-        t: parseFloat($('#years').value) || 0,
-        n: parseInt($('#n').value, 10) || 1,
-        C: parseFloat($('#contrib').value) || 0
-      };
-    }
+$('#calc').addEventListener('click',render);
+$('#reset').addEventListener('click',()=>{
+  $('#principal').value=1000;
+  $('#rate').value=6;
+  $('#years').value=10;
+  $('#n').value=12;
+  $('#contrib').value=0;
+  render();
+});
 
-    let chart; // Chart.js instance
-
-    function render() {
-      const { P, r, n, t, C } = values();
-      const { balance, yearly } = compute({ P, r, n, t, C });
-
-      const contribTotal = C * n * t;
-      const totalPutIn = P + contribTotal;
-      const interestEarned = balance - totalPutIn;
-
-      // Results table
-      $('#results').innerHTML = `
-        <div class="totals">
-          <div class="pill"><strong>Final balance:</strong> ${currency(balance)}</div>
-          <div class="pill"><strong>Total contributed:</strong> ${currency(totalPutIn)}</div>
-          <div class="pill"><strong>Interest earned:</strong> ${currency(interestEarned)}</div>
-        </div>
-        <table>
-          <thead><tr><th>Year</th><th>Balance</th></tr></thead>
-          <tbody>
-            ${yearly.map(r => `<tr><td>${r.year}</td><td>${currency(r.balance)}</td></tr>`).join('')}
-          </tbody>
-        </table>
-      `;
-
-      // Chart
-      const labels = yearly.map(r => r.year);
-      const data = yearly.map(r => r.balance);
-
-      const ctx = $('#chart').getContext('2d');
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Balance',
-            data,
-            fill: false,
-            tension: 0.25
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { title: { display: true, text: 'Year' } },
-            y: { title: { display: true, text: 'Balance (A$)' }, ticks: { callback: v => currency(v) } }
-          }
-        }
-      });
-    }
-
-    // Wire up
-    window.addEventListener('DOMContentLoaded', () => {
-      $('#calc').addEventListener('click', render);
-      $('#reset').addEventListener('click', () => {
-        $('#principal').value = 1000;
-        $('#rate').value = 6;
-        $('#years').value = 10;
-        $('#n').value = 12;
-        $('#contrib').value = 0;
-        render();
-      });
-      ['#principal','#rate','#years','#n','#contrib'].forEach(sel => {
-        $(sel).addEventListener('input', render);
-        $(sel).addEventListener('change', render);
-      });
-      render();
-    });
-  </script>
+window.addEventListener('DOMContentLoaded',render);
+</script>
 </body>
 </html>
